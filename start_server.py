@@ -2,6 +2,7 @@ from user import User
 
 from flask import Flask
 from flask import request
+from flask_cors import CORS
 
 import json
 
@@ -12,6 +13,7 @@ for user in USERS.values():
     user.start()
 
 app = Flask(__name__)
+CORS(app)
 app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
 app.users = USERS
 
