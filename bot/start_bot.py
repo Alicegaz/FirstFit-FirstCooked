@@ -73,6 +73,17 @@ def clear_user_session(user_states, chat_id):
     user_states[chat_id]['pos_probas'] = []
 
 
+def send_user_satisfaction_result(current_chat_id, positive_proba):
+    if positive_proba <= 0.5:
+        text = '*NEGATIVE*: {:.1f}%'.format((1. - positive_proba) * 100)
+        bot.send_message(chat_id=current_chat_id, text=text, parse_mode='MARKDOWN')
+        bot.send_sticker(current_chat_id, 'CAADAgADTQQAAmvEygrl-lSot7bymgI')
+    else:
+        text = '*POSITIVE*: {:.1f}%'.format((positive_proba * 100))
+        bot.send_message(chat_id=current_chat_id, text=text, parse_mode='MARKDOWN')
+        bot.send_sticker(current_chat_id, 'CAADAgADiQEAAj-VzAqgZEexapUBTQI')
+
+
 @bot.message_handler(commands=['start', 'help', 'about'])
 def handle_start(message):
     current_chat_id = message.chat.id
@@ -143,12 +154,14 @@ def handle_audio(message):
                 avg_sent = sum(user_states[current_chat_id]['pos_probas']) /\
                            len(user_states[current_chat_id]['pos_probas']) * 100
                 bot.send_message(chat_id=current_chat_id, text=CALL_ENDED_SPEECH1, parse_mode='MARKDOWN')
+                audio = open(COMPANY_QUESTIONS[-1][1], 'rb')
+                bot.send_audio(current_chat_id, audio)
                 bot.send_message(chat_id=current_chat_id, text=CALL_ENDED_SPEECH2.format(avg_sent),
                                  parse_mode='MARKDOWN')
                 bot.send_message(chat_id=current_chat_id, text=CALL_ENDED_SPEECH3,
                                  parse_mode='MARKDOWN', reply_markup=get_help_markup())
-                audio = open(COMPANY_QUESTIONS[-1][1], 'rb')
-                bot.send_audio(current_chat_id, audio)
+
+                send_user_satisfaction_result(current_chat_id, avg_sent)
                 clear_user_session(user_states, current_chat_id)
             # The talk continues
             else:
@@ -160,20 +173,15 @@ def handle_audio(message):
     else:
         if recognized_text is not None:
             positive_proba = get_sentiment(recognized_text)
-            if positive_proba <= 0.5:
-                text = '*NEGATIVE*: {:.1f}%'.format((1. - positive_proba) * 100)
-                bot.send_message(chat_id=current_chat_id, text=text, parse_mode='MARKDOWN')
-                bot.send_sticker(current_chat_id, 'CAADAgADTQQAAmvEygrl-lSot7bymgI')
-            else:
-                text = '*POSITIVE*: {:.1f}%'.format((positive_proba * 100))
-                bot.send_message(chat_id=current_chat_id, text=text, parse_mode='MARKDOWN')
-                bot.send_sticker(current_chat_id, 'CAADAgADiQEAAj-VzAqgZEexapUBTQI')
+            send_user_satisfaction_result(current_chat_id, positive_proba)
 
 
 @bot.callback_query_handler(func=lambda call: True)
 def callback_inline(call):
     if call.message:
         current_chat_id = call.message.chat.id
+        username = call.message.from_user.first_name
+
         markup = get_help_markup()
         if call.data == "track_children":
             send_text = "Open the link to see the map with location of you child\n{}" \
@@ -191,7 +199,7 @@ def callback_inline(call):
             bot.send_message(chat_id=current_chat_id,
                              text=send_text, parse_mode='MARKDOWN')
             bot.send_message(chat_id=current_chat_id,
-                             text=COMPANY_QUESTIONS[0][0], parse_mode='MARKDOWN')
+                             text=COMPANY_QUESTIONS[0][0].format(username), parse_mode='MARKDOWN')
             audio = open(COMPANY_QUESTIONS[0][1], 'rb')
             bot.send_audio(current_chat_id, audio)
 
