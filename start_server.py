@@ -42,6 +42,14 @@ def parse_call_event(call_event_info):
     return event_type
 
 
+@app.route('/api/start_tracking', methods=['GET'])
+def start_user():
+    addr_num = request.args.get('addr_num')
+    app.users[addr_num].start_user_tracking()
+
+    return "STARTED"
+
+
 @app.route('/api/user_status', methods=['GET'])
 def user_status():
     addr_num = request.args.get('addr_num')
