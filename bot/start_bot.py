@@ -7,8 +7,6 @@ import base64
 import requests
 import json
 
-import xml.etree.ElementTree as etree
-
 TOKEN = "584026500:AAGwpFl-1a8GXfIt_2lvBaHU3ZPfjqSwG1o"
 YANDEX_SPEECH_KIT_URL = 'http://asr.yandex.net/asr_xml?uuid=01ae13cb744628b58fb536d496daa1e7&key=58766f45-93bd-4031' \
                         '-abf7-ded3ba87268c&topic=queries'
@@ -17,6 +15,24 @@ WEBAPP_ADDRESS = 'http://35.231.236.148:8000/'
 bot = telebot.TeleBot(TOKEN)
 
 SPEECH_RECOGNITION_MESSAGE = 'I\'m recognizing your speech, please wait...'
+CALL_ENDED_SPEECH1 = 'Your call has been ended.'
+CALL_ENDED_SPEECH2 = 'The overall sentiment during the call was ranked as {:.1f} positive'
+CALL_ENDED_SPEECH3 = '```Your experience is recorded unanimously to influence the positive changes in the strategy of ' \
+                     'our company to provide you more profitable offers and make the services better!``` '
+COMPANY_QUESTIONS = [
+    ('Good afternoon, {}. You have been requesting a call from the Sunshine telecom company to learn more about '
+     'choosing your voice and internet plans. We can offer you Mint Mobile 3 Month Plan with 4GB of the Internet in '
+     'Hungary and 100min of calls to all regions of Hungary for just 21 EUROS per month. Are you interested?',
+     './bot/audio/audio11.m4a'),
+    ('Actually, for you, we also have a personal promotional offer as you are our regular client. We can suggest you '
+     'Sprint Unlimited Plus Plan with 40 GB of the internet, unlimited calls and SMS across Hungary for 23 Euros per '
+     'month. Are you interested in it?',
+     './bot/audio/audio22.m4a'),
+    ('Thank you for your responses! We will come back to you soon!',
+     './bot/audio/audio33.m4a')
+]
+
+user_states = {}
 
 
 def speech_to_text(audio_content):
@@ -41,7 +57,8 @@ def get_help_markup():
     keyboard = types.InlineKeyboardMarkup()
     button_list = [
         types.InlineKeyboardButton("Track your children", callback_data='track_children'),
-        types.InlineKeyboardButton("Talk to bank", callback_data='talk_to_bank'),
+        types.InlineKeyboardButton("Talk to telecom company", callback_data='talk_to_bank'),
+        types.InlineKeyboardButton("Just have fun with sentiment analysis", callback_data='sent_analysis'),
         types.InlineKeyboardButton("Write developers", callback_data='ask_coders')
     ]
 
@@ -50,21 +67,42 @@ def get_help_markup():
     return keyboard
 
 
-def parse_speech_kit_xml(xml_text):
-    xml_root = etree.fromstring(xml_text)
-
-    variant = xml_root.find('variant')
-    if variant is not None:
-        return variant.text
-
-    return None
+def clear_user_session(user_states, chat_id):
+    user_states[chat_id]['mode'] = 'default'
+    user_states[chat_id]['dialog_idx'] = 0
+    user_states[chat_id]['pos_probas'] = []
 
 
 @bot.message_handler(commands=['start', 'help', 'about'])
 def handle_start(message):
-    bot.send_message(chat_id=message.chat.id,
-                     text='HELLO',
+    current_chat_id = message.chat.id
+    if current_chat_id not in user_states:
+        user_states[current_chat_id] = {'mode': 'default'}
+
+    bot.send_message(chat_id=current_chat_id,
+                     text='Welcome to the Intelligent Voice solutions for the Nokia Mobile Network platform',
                      parse_mode='MARKDOWN', reply_markup=get_help_markup())
+
+
+@bot.message_handler(func=lambda message: True)
+def handle_text(message):
+    current_chat_id = message.chat.id
+
+    if current_chat_id in user_states:
+        if user_states[current_chat_id]['mode'] == 'talk':
+            bot.send_message(chat_id=message.chat.id,
+                             text='I see you are tired of my quizzes. You can go to another section',
+                             parse_mode='MARKDOWN', reply_markup=get_help_markup())
+            user_states[current_chat_id]['mode'] = 'default'
+        else:
+            bot.send_message(chat_id=message.chat.id,
+                             text='You can go to one of the sections from buttons',
+                             parse_mode='MARKDOWN', reply_markup=get_help_markup())
+    else:
+        user_states[current_chat_id] = {'mode': 'default'}
+        bot.send_message(chat_id=message.chat.id,
+                         text='You can go to one of the sections from buttons',
+                         parse_mode='MARKDOWN', reply_markup=get_help_markup())
 
 
 @bot.message_handler(content_types=['voice'])
@@ -88,16 +126,46 @@ def handle_audio(message):
     bot.send_message(chat_id=current_chat_id, text=text,
                      parse_mode='MARKDOWN')
 
-    if recognized_text is not None:
-        positive_proba = get_sentiment(recognized_text)
-        if positive_proba <= 0.5:
-            text = '*NEGATIVE*: {:.1f}%'.format((1. - positive_proba) * 100)
-            bot.send_message(chat_id=current_chat_id, text=text, parse_mode='MARKDOWN')
-            bot.send_sticker(current_chat_id, 'CAADAgADTQQAAmvEygrl-lSot7bymgI')
-        else:
-            text = '*POSITIVE*: {:.1f}%'.format((positive_proba * 100))
-            bot.send_message(chat_id=current_chat_id, text=text, parse_mode='MARKDOWN')
-            bot.send_sticker(current_chat_id, 'CAADAgADiQEAAj-VzAqgZEexapUBTQI')
+    if user_states[current_chat_id]['mode'] == 'talk':
+        if recognized_text is not None:
+            user_states[current_chat_id]['dialog_idx'] += 1
+            positive_proba = get_sentiment(recognized_text)
+            user_states[current_chat_id]['pos_probas'].append(positive_proba)
+            if positive_proba <= 0.5:
+                text = '*NEGATIVE*: {:.1f}%'.format((1. - positive_proba) * 100)
+                bot.send_message(chat_id=current_chat_id, text=text, parse_mode='MARKDOWN')
+            else:
+                text = '*POSITIVE*: {:.1f}%'.format((positive_proba * 100))
+                bot.send_message(chat_id=current_chat_id, text=text, parse_mode='MARKDOWN')
+
+            # End of the talk
+            if user_states[current_chat_id]['dialog_idx'] >= len(COMPANY_QUESTIONS):
+                avg_sent = sum(user_states['pos_probas']) / len(user_states['pos_probas']) * 100
+                bot.send_message(chat_id=current_chat_id, text=CALL_ENDED_SPEECH1, parse_mode='MARKDOWN')
+                bot.send_message(chat_id=current_chat_id, text=CALL_ENDED_SPEECH2.format(avg_sent),
+                                 parse_mode='MARKDOWN')
+                bot.send_message(chat_id=current_chat_id, text=CALL_ENDED_SPEECH3,
+                                 parse_mode='MARKDOWN', reply_markup=get_help_markup())
+                audio = open(COMPANY_QUESTIONS[-1][1], 'rb')
+                bot.send_audio(current_chat_id, audio)
+                clear_user_session(user_states, current_chat_id)
+            else:
+                bot.send_message(chat_id=current_chat_id,
+                                 text=COMPANY_QUESTIONS[user_states[current_chat_id]['dialog_idx']][0],
+                                 parse_mode='MARKDOWN')
+                audio = open(COMPANY_QUESTIONS[user_states[current_chat_id]['dialog_idx']][1], 'rb')
+                bot.send_audio(current_chat_id, audio)
+    else:
+        if recognized_text is not None:
+            positive_proba = get_sentiment(recognized_text)
+            if positive_proba <= 0.5:
+                text = '*NEGATIVE*: {:.1f}%'.format((1. - positive_proba) * 100)
+                bot.send_message(chat_id=current_chat_id, text=text, parse_mode='MARKDOWN')
+                bot.send_sticker(current_chat_id, 'CAADAgADTQQAAmvEygrl-lSot7bymgI')
+            else:
+                text = '*POSITIVE*: {:.1f}%'.format((positive_proba * 100))
+                bot.send_message(chat_id=current_chat_id, text=text, parse_mode='MARKDOWN')
+                bot.send_sticker(current_chat_id, 'CAADAgADiQEAAj-VzAqgZEexapUBTQI')
 
 
 @bot.callback_query_handler(func=lambda call: True)
@@ -108,22 +176,47 @@ def callback_inline(call):
         if call.data == "track_children":
             send_text = "Open the link to see the map with location of you child\n{}" \
                 .format(WEBAPP_ADDRESS)
+            bot.send_message(chat_id=current_chat_id,
+                             text=send_text, parse_mode='MARKDOWN',
+                             reply_markup=markup)
         elif call.data == "talk_to_bank":
-            # TODO: Start voice message dialog
-            send_text = "Put real text here 2"
+            send_text = "In the next few dialog sections I will show you speeches from some telecom company and you " \
+                        "should answer on them by voice, so I can recognize you and make some sensitivity analysis. " \
+                        "Wait fot the last message to see the result."
+            user_states[current_chat_id]['mode'] = 'talk'
+            user_states[current_chat_id]['dialog_idx'] = 0
+            user_states[current_chat_id]['pos_probas'] = []
+            bot.send_message(chat_id=current_chat_id,
+                             text=send_text, parse_mode='MARKDOWN')
+            bot.send_message(chat_id=current_chat_id,
+                             text=COMPANY_QUESTIONS[0][0], parse_mode='MARKDOWN')
+            audio = open(COMPANY_QUESTIONS[0][1], 'rb')
+            bot.send_audio(current_chat_id, audio)
 
         elif call.data == "ask_coders":
+            clear_user_session(user_states, current_chat_id)
             send_text = "In case of any questions don\'t hesitate to ask @AliceGazizullina or @vladvin"
+            bot.send_message(chat_id=current_chat_id,
+                             text=send_text, parse_mode='MARKDOWN',
+                             reply_markup=markup)
+        elif call.data == 'sent_analysis':
+            clear_user_session(user_states, current_chat_id)
+            send_text = "You switched to the default mode where you can send voice messages in order to get your " \
+                        "sentiment analysis results"
+            bot.send_message(chat_id=current_chat_id,
+                             text=send_text, parse_mode='MARKDOWN',
+                             reply_markup=markup)
         else:
+            clear_user_session(user_states, current_chat_id)
             send_text = "Unknown callback, sorry. You can write developers"
+            bot.send_message(chat_id=current_chat_id,
+                             text=send_text, parse_mode='MARKDOWN',
+                             reply_markup=markup)
 
         if call.data in ['track_children', 'talk_to_bank', 'ask_coders']:
             s = requests.Session()
             s.get('https://api.telegram.org/bot{0}/deletemessage?message_id={1}&chat_id={2}'
                   .format(TOKEN, call.message.message_id, current_chat_id))
-        bot.send_message(chat_id=current_chat_id,
-                         text=send_text, parse_mode='MARKDOWN',
-                         reply_markup=markup)
 
 
 if __name__ == '__main__':
