@@ -3,6 +3,7 @@ from telebot import types
 import requests
 
 TOKEN = "584026500:AAGwpFl-1a8GXfIt_2lvBaHU3ZPfjqSwG1o"
+WEBAPP_ADDRESS = 'http://35.231.236.148:8000/'
 bot = telebot.TeleBot(TOKEN)
 
 SPEECH_RECOGNITION_MESSAGE = 'I\'m recognizing your speech, please wait'
@@ -67,17 +68,16 @@ def callback_inline(call):
         current_chat_id = call.message.chat.id
         markup = get_help_markup()
         if call.data == "track_children":
-            # TODO: return a link to the web service
-            send_text = "Put real text here 1"
+            send_text = "Open the link to see the map with location of you child\n{}"\
+                .format(WEBAPP_ADDRESS)
         elif call.data == "talk_to_bank":
             # TODO: Start voice message dialog
             send_text = "Put real text here 2"
 
         elif call.data == "ask_coders":
-            # TODO: return our contacts
-            send_text = "Put real text here 3"
+            send_text = "In case of any questions don\'t hesitate to ask @AliceGazizullina or @vladvin"
         else:
-            send_text = "Unknown callback, sorry"
+            send_text = "Unknown callback, sorry. You can write developers"
 
         if call.data in ['track_children', 'talk_to_bank', 'ask_coders']:
             s = requests.Session()
