@@ -17,8 +17,8 @@ bot = telebot.TeleBot(TOKEN)
 SPEECH_RECOGNITION_MESSAGE = 'I\'m recognizing your speech, please wait...'
 CALL_ENDED_SPEECH1 = 'Your call has been ended.'
 CALL_ENDED_SPEECH2 = 'The overall sentiment during the call was ranked as {:.1f} positive'
-CALL_ENDED_SPEECH3 = '```Your experience is recorded unanimously to influence the positive changes in the strategy of ' \
-                     'our company to provide you more profitable offers and make the services better!``` '
+CALL_ENDED_SPEECH3 = '`Your experience is recorded unanimously to influence the positive changes in the strategy of ' \
+                     'our company to provide you more profitable offers and make the services better!` '
 COMPANY_QUESTIONS = [
     ('Good afternoon, {}. You have been requesting a call from the Sunshine telecom company to learn more about '
      'choosing your voice and internet plans. We can offer you Mint Mobile 3 Month Plan with 4GB of the Internet in '
@@ -152,7 +152,7 @@ def handle_audio(message):
             # End of the talk
             if user_states[current_chat_id]['dialog_idx'] >= len(COMPANY_QUESTIONS) - 1:
                 avg_sent = sum(user_states[current_chat_id]['pos_probas']) /\
-                           len(user_states[current_chat_id]['pos_probas']) * 100
+                           len(user_states[current_chat_id]['pos_probas'])
                 bot.send_message(chat_id=current_chat_id, text=CALL_ENDED_SPEECH1, parse_mode='MARKDOWN')
                 audio = open(COMPANY_QUESTIONS[-1][1], 'rb')
                 bot.send_audio(current_chat_id, audio)
