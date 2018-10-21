@@ -7,7 +7,7 @@ $(document).ready(function(){
                     console.log(data);
                 $.getJSON('http://localhost:12000/api/user_status?addr_num=' + numberArg ,function(newdata){
                     if(newdata = 'unreachable'){
-                        alert(newdata);
+                        alert('You child became unreachable!');
                     }
                 })
             };
