@@ -7,7 +7,7 @@ from flask_cors import CORS
 import json
 
 
-user1 = User('358480786506', {'lat': 47.512140, 'lon': 19.023715})
+user1 = User('358480786506', {'lat': 60.17072, 'lon': 24.943043})
 USERS = {'358480786506': user1}
 for user in USERS.values():
     user.start()
