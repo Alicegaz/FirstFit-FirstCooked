@@ -47,7 +47,7 @@ def start_user():
     addr_num = request.args.get('addr_num')
     app.users[addr_num].start_user_tracking()
 
-    return "STARTED"
+    return json.dumps("STARTED")
 
 
 @app.route('/api/user_status', methods=['GET'])
