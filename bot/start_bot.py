@@ -150,7 +150,7 @@ def handle_audio(message):
                 bot.send_message(chat_id=current_chat_id, text=text, parse_mode='MARKDOWN')
 
             # End of the talk
-            if user_states[current_chat_id]['dialog_idx'] >= len(COMPANY_QUESTIONS):
+            if user_states[current_chat_id]['dialog_idx'] >= len(COMPANY_QUESTIONS) - 1:
                 avg_sent = sum(user_states[current_chat_id]['pos_probas']) /\
                            len(user_states[current_chat_id]['pos_probas']) * 100
                 bot.send_message(chat_id=current_chat_id, text=CALL_ENDED_SPEECH1, parse_mode='MARKDOWN')
