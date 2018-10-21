@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>Phone Location Detector</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" type="text/css" media="screen" href="styles/style.css" />
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.3.1/css/all.css">
+  <script src="https://maps.google.com/maps/api/js?sensor=false&libraries=geometry&v=3.22&key=AIzaSyBypPSwk-PpQIRFFme90ztgbud8OVR4Sn4
+  ">
+  </script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+  <script src="http://maplacejs.com/dist/maplace.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-mockjax/1.6.2/jquery.mockjax.min.js"></script>
+  <link href="https://fonts.googleapis.com/css?family=Exo" rel="stylesheet">
+</head>
+
+<body>
+  <div class="grid-container">
+      <div id="gmap"></div>
+      <div class="secondItem">
+          <div id="myProgress">
+              <div id="myBar"></div>
+            </div>
+          <input class ="phoneNumber" placeholder="Register Name">
+          <input id = "phoneInput" class ="phoneNumber" type="number" placeholder="Enter PhoneNumber">
+          <button id="subBtn" class="submitBtn">Submit</button>
+      </div> 
+  </div>
+  <script src="scripts/script.js"></script>
+</body>
+
+</html>

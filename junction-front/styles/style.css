@@ -1,0 +1,79 @@
+#gmap{
+    border-radius: 25px;
+}
+
+.secondItem{
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    align-items: center;
+    align-content: space-between;
+}
+
+.phoneNumber{
+    width: 70vw;
+    height: 5vh;
+    border-radius: 15px;
+}
+
+.submitBtn{
+    width: 50vw;
+    height: 7vh;
+    border-radius: 25px;
+    background-color: green;
+    color: white;
+    font-size: 20px;
+}
+
+.grid-container {
+    display: grid;
+    grid-template-columns: auto;
+    grid-template-rows: 70vh 25vh;
+    grid-row-gap:3vh;
+  }
+
+  #myProgress {
+    width: 100%;
+    background-color: #ddd;
+    display: none;
+  }
+  
+  #myBar {
+    width: 1%;
+    height: 30px;
+    background-color: #4CAF50;
+  }
+
+  .ui-dialog {
+    left: 0;
+    outline: 0 none;
+    padding: 0 !important;
+    position: absolute;
+    top: 0;
+}
+
+#success {
+    padding: 0;
+    margin: 0; 
+}
+
+.ui-dialog .ui-dialog-content {
+    background: none repeat scroll 0 0 transparent;
+    border: 0 none;
+    overflow: auto;
+    position: relative;
+    padding: 0 !important;
+}
+
+.ui-widget-header {
+    background: red;
+    border: 0;
+    color: #fff;
+    font-weight: normal;
+}
+
+.ui-dialog .ui-dialog-titlebar {
+    padding: 0.1em .5em;
+    position: relative;
+        font-size: 1em;
+}
