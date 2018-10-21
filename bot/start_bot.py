@@ -1,3 +1,5 @@
+from sent_analysis.sentiment import get_sentiment
+
 import telebot
 from telebot import types
 
@@ -86,11 +88,16 @@ def handle_audio(message):
     bot.send_message(chat_id=current_chat_id, text=text,
                      parse_mode='MARKDOWN')
 
-    # if recognized_text is not None:
-    # TODO: call sentiment analysis model to predict the satisfaction
-    # TODO: send something to user
-    # bot.send_message(chat_id=current_chat_id,
-    #                  text=text, reply_markup=markup)
+    if recognized_text is not None:
+        positive_proba = get_sentiment(recognized_text)
+        if positive_proba <= 0.5:
+            text = '*NEGATIVE*: {:.1f}%'.format((1. - positive_proba) * 100)
+            bot.send_message(chat_id=current_chat_id, text=text, parse_mode='MARKDOWN')
+            bot.send_sticker(current_chat_id, 'CAADAgADTQQAAmvEygrl-lSot7bymgI')
+        else:
+            text = '*POSITIVE*: {:.1f}%'.format((positive_proba * 100))
+            bot.send_message(chat_id=current_chat_id, text=text, parse_mode='MARKDOWN')
+            bot.send_sticker(current_chat_id, 'CAADAgADiQEAAj-VzAqgZEexapUBTQI')
 
 
 @bot.callback_query_handler(func=lambda call: True)
@@ -119,4 +126,5 @@ def callback_inline(call):
                          reply_markup=markup)
 
 
-bot.polling(none_stop=False, interval=0, timeout=40)
+if __name__ == '__main__':
+    bot.polling(none_stop=False, interval=0, timeout=40)
